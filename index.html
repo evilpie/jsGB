@@ -65,43 +65,44 @@ jsGB = {
 
   frame: function() {
     var fclock = Z80._clock.t+70224;
-    var brk;
+    var breakpoint = document.getElementById('breakpoint');
     do {
-      if(Z80._r.ime && MMU._ie && MMU._if)
-      {
-        Z80._halt=0; Z80._r.ime=0;
-        if((MMU._ie&1) && (MMU._if&1))
-        {
-          MMU._if &= 0xFE; Z80._ops.RST40();
+      if (Z80._r.ime && MMU._ie && MMU._if) {
+        Z80._halt=0; 
+        Z80._r.ime=0;
+        
+        if((MMU._ie & 1) && (MMU._if & 1)) {
+          MMU._if &= 0xFE; 
+          Z80._ops.RST40();
         }
       }
-      else
-      {
-        if(Z80._halt) { Z80._r.m=1; Z80._r.t=4; }
-        else
-        {
+      else {
+        if (Z80._halt) { 
+          Z80._r.m=1; 
+          Z80._r.t=4; 
+        }
+        else {
           Z80._r.r = (Z80._r.r+1) & 127;
           Z80._map[MMU.rb(Z80._r.pc++)]();
           Z80._r.pc &= 65535;
         }
       }
-      Z80._clock.m += Z80._r.m; Z80._clock.t += Z80._r.t;
-      if(MMU._inbios && Z80._r.pc == 0x0100)
-      {
-        MMU._inbios=0;
+      Z80._clock.m += Z80._r.m; 
+      Z80._clock.t += Z80._r.t;
+      
+      if(MMU._inbios && Z80._r.pc == 0x0100) {
+        MMU._inbios = 0;
         LOG.out('MAIN', 'Leaving BIOS.');
       }
       GPU.checkline();
-      brk = document.getElementById('breakpoint').value;
-      if(brk && parseInt(brk,16))
-      {
-        if(Z80._r.pc==parseInt(brk,16))
-	{
-	  Z80._stop = 1;
-	}
+      
+      if (breakpoint.value && parseInt(breakpoint.value, 16)) {
+        if(Z80._r.pc == parseInt(breakpoint.value,16)) {
+          Z80._stop = 1;
+        }
       }
-      if(Z80._stop)
-      {
+      
+      if(Z80._stop) {
         jsGB.pause();
         break;
       }

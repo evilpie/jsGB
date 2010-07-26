@@ -207,7 +207,16 @@ Z80 = {
     CPr_l: function() { var i=Z80._r.a; i-=Z80._r.l; Z80._ops.fz(i,1); if(i<0) Z80._r.f|=0x10; i&=255; Z80._r.m=1; Z80._r.t=4; },
     CPr_a: function() { var i=Z80._r.a; i-=Z80._r.a; Z80._ops.fz(i,1); if(i<0) Z80._r.f|=0x10; i&=255; Z80._r.m=1; Z80._r.t=4; },
     CPHL: function() { var i=Z80._r.a; i-=MMU.rb((Z80._r.h<<8)+Z80._r.l); Z80._ops.fz(i,1); if(i<0) Z80._r.f|=0x10; i&=255; Z80._r.m=2; Z80._r.t=8; },
-    CPn: function() { var i=Z80._r.a; i-=MMU.rb(Z80._r.pc); Z80._r.pc++; Z80._ops.fz(i,1); if(i<0) Z80._r.f|=0x10; i&=255; Z80._r.m=2; Z80._r.t=8; },
+    CPn: function() { // one of those small performance killers
+      var i = Z80._r.a; 
+      i -= MMU.rb(Z80._r.pc); 
+      Z80._r.pc++; 
+      Z80._ops.fz(i,1); 
+      if(i<0) Z80._r.f|=0x10; 
+      i &= 255;
+      Z80._r.m = 2; 
+      Z80._r.t = 8; 
+    },
 
     ANDr_b: function() { Z80._r.a&=Z80._r.b; Z80._r.a&=255; Z80._ops.fz(Z80._r.a); Z80._r.m=1; Z80._r.t=4; },
     ANDr_c: function() { Z80._r.a&=Z80._r.c; Z80._r.a&=255; Z80._ops.fz(Z80._r.a); Z80._r.m=1; Z80._r.t=4; },
@@ -439,7 +448,21 @@ Z80 = {
     JPCnn: function()  { Z80._r.m=3; Z80._r.t=12; if((Z80._r.f&0x10)==0x10) { Z80._r.pc=MMU.rw(Z80._r.pc); Z80._r.m++; Z80._r.t+=4; } else Z80._r.pc+=2; },
 
     JRn: function() { var i=MMU.rb(Z80._r.pc); if(i>127) i=-((~i+1)&255); Z80._r.pc++; Z80._r.m=2; Z80._r.t=8; Z80._r.pc+=i; Z80._r.m++; Z80._r.t+=4; },
-    JRNZn: function() { var i=MMU.rb(Z80._r.pc); if(i>127) i=-((~i+1)&255); Z80._r.pc++; Z80._r.m=2; Z80._r.t=8; if((Z80._r.f&0x80)==0x00) { Z80._r.pc+=i; Z80._r.m++; Z80._r.t+=4; } },
+    JRNZn: function() { 
+      var i = MMU.rb(Z80._r.pc); 
+      if (i > 127) {
+         i = -(256 - i); // awesome speed improvment
+      }
+      Z80._r.pc++; 
+      Z80._r.m = 2; 
+      Z80._r.t = 8;
+      
+      if ((Z80._r.f & 0x80) == 0x00) {
+        Z80._r.pc += i; 
+        Z80._r.m++; 
+        Z80._r.t += 4; 
+      } 
+    },
     JRZn: function()  { var i=MMU.rb(Z80._r.pc); if(i>127) i=-((~i+1)&255); Z80._r.pc++; Z80._r.m=2; Z80._r.t=8; if((Z80._r.f&0x80)==0x80) { Z80._r.pc+=i; Z80._r.m++; Z80._r.t+=4; } },
     JRNCn: function() { var i=MMU.rb(Z80._r.pc); if(i>127) i=-((~i+1)&255); Z80._r.pc++; Z80._r.m=2; Z80._r.t=8; if((Z80._r.f&0x10)==0x00) { Z80._r.pc+=i; Z80._r.m++; Z80._r.t+=4; } },
     JRCn: function()  { var i=MMU.rb(Z80._r.pc); if(i>127) i=-((~i+1)&255); Z80._r.pc++; Z80._r.m=2; Z80._r.t=8; if((Z80._r.f&0x10)==0x10) { Z80._r.pc+=i; Z80._r.m++; Z80._r.t+=4; } },
